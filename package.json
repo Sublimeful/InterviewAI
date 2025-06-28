@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "repository": {
     "type": "git",
@@ -15,5 +18,21 @@
     "url": "https://github.com/Sublimeful/interview-assistant/issues"
   },
   "homepage": "https://github.com/Sublimeful/interview-assistant#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "lucide-react": "^0.525.0",
+    "next": "^15.3.4",
+    "postcss": "^8.5.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.7",
+    "@types/react": "^19.1.8",
+    "eslint": "9.30.0",
+    "eslint-config-next": "15.3.4",
+    "typescript": "5.8.3"
+  }
 }
