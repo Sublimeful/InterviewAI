@@ -3,33 +3,28 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Code, MessageCircle, Send } from "lucide-react";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
+
+interface Message {
+  id: number;
+  sender: "user" | "ai";
+  content: string;
+  timestamp: Date;
+}
 
 export default function Page() {
   const searchParams = useSearchParams();
   const company = searchParams.get("company") || "Unknown Company";
 
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
-  const [code, setCode] = useState("// Write your solution here\n\n");
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "ai",
-      content:
-        `Welcome to your mock interview for ${company}! I'm your AI interviewer. Let's start with a coding question. Please solve the following problem in the language of your choice.`,
-      timestamp: new Date(),
-    },
-    {
-      id: 2,
-      sender: "ai",
-      content:
-        `**Problem: Two Sum**\n\nGiven an array of integers and a target sum, return the indices of two numbers that add up to the target.\n\nExample:\nInput: nums = [2,7,11,15], target = 9\nOutput: [0,1] (because nums[0] + nums[1] = 2 + 7 = 9)`,
-      timestamp: new Date(),
-    },
-  ]);
+  const [code, setCode] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   const languages = [
     { value: "javascript", label: "JavaScript" },
@@ -49,13 +44,63 @@ export default function Page() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  // Get the problem statement and initial instructions
+  useEffect(() => {
+    setIsTyping(true);
+    getChatResponse(
+      `Hello mock interviewer, introduce yourself to me and give me a coding problem statement for a mock interview at ${company}. Include any specific requirements or constraints that are typical for their interviews.`,
+    ).then((initialResponse) => {
+      setMessages((prev) => [...prev, initialResponse]);
+      setIsTyping(false);
+    });
+  }, []);
 
-    const userMessage = {
-      id: messages.length + 1,
+  const getChatResponse = async (message: string): Promise<Message> => {
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: message,
+          company: company,
+          codeContext: `\`\`\`${selectedLanguage}\n${code}\n\`\`\``,
+          sessionId,
+          conversationHistory: messages, // Still send for context
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to get response");
+
+      const data = await response.json();
+
+      // If we do not have a session ID yet, set it to the one returned from the API
+      if (!sessionId) {
+        setSessionId(data.sessionId);
+      }
+
+      const aiMessage: Message = {
+        id: Date.now() + 1,
+        sender: "ai",
+        content: data.reply,
+        timestamp: new Date(),
+      };
+      return aiMessage;
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      return {
+        id: Date.now() + 1,
+        sender: "ai",
+        content: "Sorry, I encountered an error while processing your request.",
+        timestamp: new Date(),
+      };
+    }
+  };
+
+  const sendChatMessage = async (message: string) => {
+    const userMessage: Message = {
+      id: Date.now(),
       sender: "user",
-      content: newMessage,
+      content: message,
       timestamp: new Date(),
     };
 
@@ -63,54 +108,34 @@ export default function Page() {
     setNewMessage("");
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponses = [
-        "That's a good approach! Can you walk me through your thought process?",
-        "I see you're considering that solution. What would be the time complexity?",
-        "Interesting! How would you handle edge cases like an empty array?",
-        "Good progress! Can you optimize this further?",
-        "Great question! Let me give you a hint: think about using a hash map.",
-      ];
-
-      const aiMessage = {
-        id: messages.length + 2,
-        sender: "ai",
-        content: aiResponses[Math.floor(Math.random() * aiResponses.length)],
-        timestamp: new Date(),
-      };
-
+    try {
+      const aiMessage = await getChatResponse(message);
       setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Error:", error);
+      // Error handling...
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+    await sendChatMessage(newMessage.trim());
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       handleSendMessage();
     }
   };
 
-  const getLanguageComment = (lang) => {
-    const comments = {
-      javascript: "// Write your solution here\n\n",
-      python: "# Write your solution here\n\n",
-      java: "// Write your solution here\n\n",
-      cpp: "// Write your solution here\n\n",
-      typescript: "// Write your solution here\n\n",
-      go: "// Write your solution here\n\n",
-      rust: "// Write your solution here\n\n",
-    };
-    return comments[lang] || "// Write your solution here\n\n";
-  };
-
-  const handleLanguageChange = (newLang) => {
+  const handleLanguageChange = (newLang: string) => {
     setSelectedLanguage(newLang);
-    setCode(getLanguageComment(newLang));
   };
 
-  const formatTime = (date) => {
+  const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
@@ -164,18 +189,37 @@ export default function Page() {
           </div>
 
           {/* Code Area */}
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-4 relative">
             <textarea
+              name="editor"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full h-full bg-transparent text-gray-100 font-mono text-sm resize-none focus:outline-none"
-              placeholder="Write your code here..."
-              spellCheck={false}
-              style={{
-                lineHeight: "1.5",
-                tabSize: 2,
+              onChange={(e) => {
+                setCode(e.target.value);
               }}
-            />
+              placeholder="Write your code here..."
+              className="w-full h-full bg-transparent text-transparent font-mono text-sm resize-none focus:outline-none leading-[1.5] indent-[2] caret-gray-100 placeholder-gray-400"
+              spellCheck={false}
+            >
+            </textarea>
+            <SyntaxHighlighter
+              language={selectedLanguage}
+              style={atomOneDark}
+              customStyle={{
+                background: "transparent",
+                fontFamily: "monospace",
+                color: "#f3f4f6",
+                fontSize: "14px",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                padding: "16px",
+                pointerEvents: "none",
+              }}
+            >
+              {code}
+            </SyntaxHighlighter>
           </div>
         </div>
 
@@ -250,10 +294,10 @@ export default function Page() {
           <div className="border-t border-gray-200 p-4">
             <div className="flex gap-2">
               <textarea
-                ref={textareaRef}
+                ref={messageInputRef}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 placeholder="Ask a question or explain your approach..."
                 className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 rows={1}

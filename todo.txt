@@ -1,0 +1,4 @@
+- Selecting comments in the editor shows the non syntax highlighted text.
+- Enable tab support in the editor.
+- Fix the scrolling issue in the editor.
+- Fix the issue where the interviewer cannot see the candidate's code.
