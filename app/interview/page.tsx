@@ -2,9 +2,9 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Code, MessageCircle, Send } from "lucide-react";
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { Code, MessageCircle, Send } from "lucide-react";
+
+import CodeEditor from "@/components/CodeEditor";
 
 interface Message {
   id: number;
@@ -17,8 +17,6 @@ export default function Page() {
   const searchParams = useSearchParams();
   const company = searchParams.get("company") || "Unknown Company";
 
-  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
-  const [code, setCode] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -26,15 +24,8 @@ export default function Page() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const languages = [
-    { value: "javascript", label: "JavaScript" },
-    { value: "python", label: "Python" },
-    { value: "java", label: "Java" },
-    { value: "cpp", label: "C++" },
-    { value: "typescript", label: "TypeScript" },
-    { value: "go", label: "Go" },
-    { value: "rust", label: "Rust" },
-  ];
+  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
+  const [code, setCode] = useState("");
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -46,13 +37,13 @@ export default function Page() {
 
   // Get the problem statement and initial instructions
   useEffect(() => {
-    setIsTyping(true);
-    getChatResponse(
-      `Hello mock interviewer, introduce yourself to me and give me a coding problem statement for a mock interview at ${company}. Include any specific requirements or constraints that are typical for their interviews.`,
-    ).then((initialResponse) => {
-      setMessages((prev) => [...prev, initialResponse]);
-      setIsTyping(false);
-    });
+    // setIsTyping(true);
+    // getChatResponse(
+    //   `Hello mock interviewer, introduce yourself to me and give me a coding problem statement for a mock interview at ${company}. Include any specific requirements or constraints that are typical for their interviews.`,
+    // ).then((initialResponse) => {
+    //   setMessages((prev) => [...prev, initialResponse]);
+    //   setIsTyping(false);
+    // });
   }, []);
 
   const getChatResponse = async (message: string): Promise<Message> => {
@@ -131,10 +122,6 @@ export default function Page() {
     }
   };
 
-  const handleLanguageChange = (newLang: string) => {
-    setSelectedLanguage(newLang);
-  };
-
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
@@ -165,63 +152,14 @@ export default function Page() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Code Editor - Left Side */}
-        <div className="w-1/2 bg-gray-900 flex flex-col">
-          {/* Language Selector */}
-          <div className="bg-gray-800 px-4 py-3 border-b border-gray-700">
-            <div className="flex items-center gap-2">
-              <Code className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-300">Language:</span>
-              <div className="relative">
-                <select
-                  value={selectedLanguage}
-                  onChange={(e) => handleLanguageChange(e.target.value)}
-                  className="bg-gray-700 text-white text-sm rounded px-3 py-1 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {languages.map((lang) => (
-                    <option key={lang.value} value={lang.value}>
-                      {lang.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* Code Area */}
-          <div className="flex-1 p-4 relative">
-            <textarea
-              name="editor"
-              value={code}
-              onChange={(e) => {
-                setCode(e.target.value);
-              }}
-              placeholder="Write your code here..."
-              className="w-full h-full bg-transparent text-transparent font-mono text-sm resize-none focus:outline-none leading-[1.5] indent-[2] caret-gray-100 placeholder-gray-400"
-              spellCheck={false}
-            >
-            </textarea>
-            <SyntaxHighlighter
-              language={selectedLanguage}
-              style={atomOneDark}
-              customStyle={{
-                background: "transparent",
-                fontFamily: "monospace",
-                color: "#f3f4f6",
-                fontSize: "14px",
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                padding: "16px",
-                pointerEvents: "none",
-              }}
-            >
-              {code}
-            </SyntaxHighlighter>
-          </div>
-        </div>
+        <CodeEditor
+          onCodeChange={(newCode: string) => {
+            setCode(newCode);
+          }}
+          onLanguageChange={(newLanguage: string) => {
+            setSelectedLanguage(newLanguage);
+          }}
+        />
 
         {/* Chat Interface - Right Side */}
         <div className="w-1/2 bg-white flex flex-col">

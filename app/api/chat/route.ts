@@ -24,9 +24,6 @@ const promptTemplate = ChatPromptTemplate.fromMessages([
     "system",
     `You are conducting a technical interview for {company}.
 
-INTERVIEWEE'S CODE:
-{codeContext}
-
 INTERVIEW OBJECTIVES:
 - Evaluate problem-solving skills
 - Assess code quality and optimization
@@ -52,7 +49,7 @@ export async function POST(request: NextRequest) {
       message,
       company,
       codeContext,
-      sessionId
+      sessionId,
     } = await request.json();
 
     // If no sessionId provided, create one
@@ -71,28 +68,22 @@ export async function POST(request: NextRequest) {
     const chainWithHistory = new RunnableWithMessageHistory({
       runnable: chain,
       getMessageHistory: (sessionId) => {
-
-        console.log("Retrieving message history for session:", sessionId);
         const sessionMemory = sessionMemories.get(sessionId);
-        console.log(sessionMemory);
-        
         return sessionMemory;
       },
       inputMessagesKey: "input",
       historyMessagesKey: "history",
     });
-    console.log(codeContext);
 
     // Execute with context
     const response = await chainWithHistory.invoke({
       company: company,
-      codeContext: codeContext || "No code written yet",
-      input: message,
+      input: `${message}\n\nHere is the code so far:\n${codeContext}`,
     }, { configurable: { sessionId: finalSessionId } });
 
     return NextResponse.json({
       reply: response.content,
-      sessionId: finalSessionId // Send back to frontend
+      sessionId: finalSessionId, // Send back to frontend
     });
   } catch (error) {
     console.error("LangChain Error:", error);
