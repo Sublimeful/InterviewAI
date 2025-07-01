@@ -21,7 +21,7 @@
   "description": "",
   "dependencies": {
     "@langchain/core": "^0.3.61",
-    "@langchain/openai": "^0.5.16",
+    "@langchain/google-genai": "^0.2.14",
     "@tailwindcss/postcss": "^4.1.11",
     "highlight.js": "^11.11.1",
     "langchain": "^0.3.29",

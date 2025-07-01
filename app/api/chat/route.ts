@@ -1,4 +1,4 @@
-import { ChatOpenAI } from "@langchain/openai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { RunnableWithMessageHistory } from "@langchain/core/runnables";
 import {
   ChatPromptTemplate,
@@ -13,16 +13,15 @@ import { generateSessionId } from "utils/sessionManager";
 // Store memory per session (in production, use Redis or database)
 const sessionMemories = new Map();
 
-const model = new ChatOpenAI({
-  modelName: "gpt-4o",
-  temperature: 0.7,
-  openAIApiKey: process.env.OPENAI_API_KEY,
+const model = new ChatGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENAI_API_KEY,
+  model: "gemini-2.5-flash-lite-preview-06-17",
 });
 
 const promptTemplate = ChatPromptTemplate.fromMessages([
   [
     "system",
-    `You are conducting a technical interview for {company}.
+    `You are a technical interviewer for {company}.
 
 INTERVIEW OBJECTIVES:
 - Evaluate problem-solving skills
@@ -37,7 +36,7 @@ INTERVIEW STYLE:
 - Inquire about time/space complexity
 - Ask about edge cases and testing
 
-Remember: This is a {company} interview, so tailor your questions to their typical interview style.`,
+Remember: This is a {company} interview, so tailor your questions to their typical interview style. Additionally, keep your responses brief. Ensure the response is in plain text without any Markdown or special formatting. Avoid bullet points, asterisks, or any symbols that indicate structured text.`,
   ],
   new MessagesPlaceholder("history"),
   ["human", "{input}"],

@@ -1,0 +1,7 @@
+Add a way to select the difficulty of the problem (easy, medium, hard), and adjust the time limit accordingly
+Add a time limit to expire the interview, and show a countdown timer
+After time limit expires, automatically delete the session memory
+Switch to redis, and use the session ID as the key, and expire command
+
+FUTURE WORK:
+Implement a voice interface for the interview, and a avatar for the interviewer

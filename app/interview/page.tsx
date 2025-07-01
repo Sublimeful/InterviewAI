@@ -37,13 +37,13 @@ export default function Page() {
 
   // Get the problem statement and initial instructions
   useEffect(() => {
-    // setIsTyping(true);
-    // getChatResponse(
-    //   `Hello mock interviewer, introduce yourself to me and give me a coding problem statement for a mock interview at ${company}. Include any specific requirements or constraints that are typical for their interviews.`,
-    // ).then((initialResponse) => {
-    //   setMessages((prev) => [...prev, initialResponse]);
-    //   setIsTyping(false);
-    // });
+    setIsTyping(true);
+    getChatResponse(
+      `Hello mock interviewer, introduce yourself to me and give me a coding problem statement for a mock interview at ${company}. Include any specific requirements or constraints that are typical for their interviews.`,
+    ).then((initialResponse) => {
+      setMessages((prev) => [...prev, initialResponse]);
+      setIsTyping(false);
+    });
   }, []);
 
   const getChatResponse = async (message: string): Promise<Message> => {
@@ -232,6 +232,7 @@ export default function Page() {
           <div className="border-t border-gray-200 p-4">
             <div className="flex gap-2">
               <textarea
+                name="messageInput"
                 ref={messageInputRef}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
@@ -239,9 +240,15 @@ export default function Page() {
                 placeholder="Ask a question or explain your approach..."
                 className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 rows={1}
-                style={{ minHeight: "40px", maxHeight: "120px" }}
+                style={{
+                  minHeight: "40px",
+                  maxHeight: "120px",
+                  scrollbarColor: "darkgrey transparent",
+                }}
               />
               <button
+                type="button"
+                title="Send Message"
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim()}
                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-colors"
