@@ -16,11 +16,13 @@ interface Message {
 export default function Page() {
   const searchParams = useSearchParams();
   const company = searchParams.get("company") || "Unknown Company";
+  const difficulty = searchParams.get("difficulty") || "Medium";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const isInitializedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -37,9 +39,13 @@ export default function Page() {
 
   // Get the problem statement and initial instructions
   useEffect(() => {
+    // Skip if already initialized or running in production
+    if (isInitializedRef.current) return;
+    isInitializedRef.current = true; // Mark as initialized
+
     setIsTyping(true);
     getChatResponse(
-      `Hello mock interviewer, introduce yourself to me and give me a coding problem statement for a mock interview at ${company}. Include any specific requirements or constraints that are typical for their interviews.`,
+      `Hello mock interviewer, introduce yourself to me and give me a ${difficulty} level coding problem for a mock interview at ${company}. Include any specific requirements or constraints that are typical for their interviews.`,
     ).then((initialResponse) => {
       setMessages((prev) => [...prev, initialResponse]);
       setIsTyping(false);
@@ -88,6 +94,8 @@ export default function Page() {
   };
 
   const sendChatMessage = async (message: string) => {
+    if (isTyping) return; // Prevent sending while AI is typing
+
     const userMessage: Message = {
       id: Date.now(),
       sender: "user",
@@ -250,7 +258,7 @@ export default function Page() {
                 type="button"
                 title="Send Message"
                 onClick={handleSendMessage}
-                disabled={!newMessage.trim()}
+                disabled={!newMessage.trim() || isTyping}
                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-colors"
               >
                 <Send className="w-4 h-4" />

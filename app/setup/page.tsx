@@ -9,6 +9,9 @@ export default function Page() {
   const router = useRouter();
 
   const [company, setCompany] = useState("");
+  const [difficulty, setDifficulty] = useState<"Easy" | "Medium" | "Hard">(
+    "Medium",
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   const handleStartInterview = () => {
@@ -20,10 +23,9 @@ export default function Page() {
     // For demo purposes, we'll show what the URL would be
     const interviewUrl = `/interview?company=${
       encodeURIComponent(company.trim())
-    }`;
+    }&difficulty=${encodeURIComponent(difficulty)}`;
 
     setTimeout(() => {
-      setIsLoading(false);
       router.push(interviewUrl);
     }, 1000);
   };
@@ -35,7 +37,7 @@ export default function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 to-sky-200 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           {/* Header */}
@@ -54,6 +56,7 @@ export default function Page() {
           {/* Form */}
           <div className="space-y-6">
             <div>
+              {/* Company Selection */}
               <label
                 htmlFor="company"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -73,12 +76,29 @@ export default function Page() {
                   disabled={isLoading}
                 />
               </div>
+              {/* Difficulty Selection */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Difficulty Level
+                </label>
+                <select
+                  value={difficulty}
+                  onChange={(e) =>
+                    setDifficulty(e.target.value as "Easy" | "Medium" | "Hard")}
+                  className="w-full border border-gray-300 rounded-lg py-3 px-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  disabled={isLoading}
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
             </div>
 
             <button
               onClick={handleStartInterview}
               disabled={!company.trim() || isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {isLoading
                 ? (
