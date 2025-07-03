@@ -9,9 +9,14 @@ import { NextRequest, NextResponse } from "next/server";
 // For demos, you can also use an in-memory store:
 import { ChatMessageHistory } from "langchain/stores/message/in_memory";
 import { generateSessionId } from "utils/sessionManager";
+import { createClient } from "redis";
 
-// Store memory per session (in production, use Redis or database)
-const sessionMemories = new Map();
+// Create a Redis client
+const redisClient = await createClient({
+  url: process.env.REDIS_URL || "redis://localhost:6379",
+})
+  .on("error", (err) => console.error("Redis Client Error", err))
+  .connect();
 
 const model = new ChatGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENAI_API_KEY,
@@ -54,22 +59,42 @@ export async function POST(request: NextRequest) {
     // If no sessionId provided, create one
     const finalSessionId = sessionId?.trim() || generateSessionId();
 
-    // Get or create memory for this session
-    if (!sessionMemories.has(finalSessionId)) {
-      sessionMemories.set(
-        finalSessionId,
-        new ChatMessageHistory(),
-      );
-    }
+    // Track history instance for this request
+    let currentSessionHistory: ChatMessageHistory | null = null;
+
+    // Create helper function to handle Redis storage
+    const getMessageHistory = async (sessionId: string) => {
+      if (currentSessionHistory) return currentSessionHistory;
+
+      const history = new ChatMessageHistory();
+      const storedData = await redisClient.get(sessionId);
+
+      if (storedData) {
+        // Handle Buffer conversion if needed
+        const historyString = storedData.toString();
+
+        try {
+          const parsedHistory = JSON.parse(historyString);
+          for (const msg of parsedHistory) {
+            if (msg.type === "human") {
+              await history.addUserMessage(msg.content);
+            } else if (msg.type === "ai") {
+              await history.addAIMessage(msg.content);
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing chat history:", error);
+        }
+      }
+
+      currentSessionHistory = history;
+      return history;
+    };
 
     // Create conversation chain
-    const chain = promptTemplate.pipe(model);
     const chainWithHistory = new RunnableWithMessageHistory({
-      runnable: chain,
-      getMessageHistory: (sessionId) => {
-        const sessionMemory = sessionMemories.get(sessionId);
-        return sessionMemory;
-      },
+      runnable: promptTemplate.pipe(model),
+      getMessageHistory,
       inputMessagesKey: "input",
       historyMessagesKey: "history",
     });
@@ -79,6 +104,27 @@ export async function POST(request: NextRequest) {
       company: company,
       input: `${message}\n\nHere is the code so far:\n${codeContext}`,
     }, { configurable: { sessionId: finalSessionId } });
+
+    // Save updated history to Redis after interaction
+    const currentHistory = await getMessageHistory(finalSessionId);
+    const messages = await currentHistory.getMessages();
+
+    // Expire the key after 1 hour
+    const keyExists = await redisClient.exists(finalSessionId);
+
+    // Store the messages in Redis
+    await redisClient.set(
+      finalSessionId,
+      JSON.stringify(messages.map((m) => ({
+        type: m.getType(),
+        content: m.content,
+      }))),
+    );
+
+    // If the key did not exist before, set an expiration time
+    if (!keyExists) {
+      await redisClient.expire(finalSessionId, 3600); // Set expiration to 1 hour
+    }
 
     return NextResponse.json({
       reply: response.content,
