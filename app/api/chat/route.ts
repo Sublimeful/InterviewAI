@@ -1,4 +1,3 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { RunnableWithMessageHistory } from "@langchain/core/runnables";
 import {
   ChatPromptTemplate,
@@ -9,19 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
 // For demos, you can also use an in-memory store:
 import { ChatMessageHistory } from "langchain/stores/message/in_memory";
 import { generateSessionId } from "utils/sessionManager";
-import { createClient } from "redis";
-
-// Create a Redis client
-const redisClient = await createClient({
-  url: process.env.REDIS_URL || "redis://localhost:6379",
-})
-  .on("error", (err) => console.error("Redis Client Error", err))
-  .connect();
-
-const model = new ChatGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENAI_API_KEY,
-  model: "gemini-2.5-flash-lite-preview-06-17",
-});
+import { getRedisClient } from "utils/redis";
+import { getChatModel } from "utils/chatModel";
 
 const promptTemplate = ChatPromptTemplate.fromMessages([
   [
@@ -55,6 +43,11 @@ export async function POST(request: NextRequest) {
       codeContext,
       sessionId,
     } = await request.json();
+    // Get chat model
+    const model = await getChatModel();
+
+    // Get redisClient
+    const redisClient = await getRedisClient();
 
     // If no sessionId provided, create one
     const finalSessionId = sessionId?.trim() || generateSessionId();

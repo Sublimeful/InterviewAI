@@ -1,17 +1,17 @@
 services:
-  redis:
+  interviewai-redis:
     image: redis:latest
-    container_name: redis
+    container_name: interviewai-redis
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
-  interviewai:
+      - ./redis_data:/data
+  interviewai-web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: interviewai
+    container_name: interviewai-web
     ports:
-      - "80:80"
+      - "3000:3000"
     depends_on:
-      - redis
+      - interviewai-redis

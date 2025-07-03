@@ -9,7 +9,12 @@ export default function CodeBlock(
     ref?: React.RefObject<HTMLPreElement>;
   },
 ) {
-  const codeRef = ref || useRef<HTMLPreElement>(null);
+  let codeRef = useRef<HTMLPreElement>(null);
+
+  // If a ref is passed, use it instead of creating a new one
+  if (ref) {
+    codeRef = ref;
+  }
 
   useEffect(() => {
     codeRef.current.innerHTML = code;

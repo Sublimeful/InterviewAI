@@ -99,8 +99,8 @@ export default function Page() {
                       AI Interviewer:
                     </p>
                     <p className="text-slate-600">
-                      "Tell me about a challenging project you worked on
-                      recently."
+                      &quot;Tell me about a challenging project you worked on
+                      recently.&quot;
                     </p>
                   </div>
 

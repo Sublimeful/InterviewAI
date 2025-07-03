@@ -127,19 +127,10 @@ export default function CodeEditor(
 ) {
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [code, setCode] = useState("");
-  const [history] = useState(() => new TextHistory(20));
-
-  useEffect(() => {
-    // Save to history on code change
-    history.recordState(
-      code,
-      codeEditorRef.current.selectionStart,
-      codeEditorRef.current.selectionEnd,
-    );
-  }, [code]);
 
   const syntaxHighlighterRef = useRef<HTMLPreElement>(null);
   const codeEditorRef = useRef<HTMLTextAreaElement>(null);
+  const history = useRef(new TextHistory(20));
 
   const handleLanguageChange = (newLang: string) => {
     onLanguageChange(newLang);
@@ -155,6 +146,15 @@ export default function CodeEditor(
     { value: "go", label: "Go" },
     { value: "rust", label: "Rust" },
   ];
+
+  useEffect(() => {
+    // Save to history on code change
+    history.current.recordState(
+      code,
+      codeEditorRef.current.selectionStart,
+      codeEditorRef.current.selectionEnd,
+    );
+  }, [code]);
 
   return (
     <div className="w-1/2 bg-gray-900 flex flex-col">
@@ -204,7 +204,7 @@ export default function CodeEditor(
             }
             if (e.key === "z" && (e.ctrlKey || e.metaKey)) {
               e.preventDefault();
-              const prevState = history.undo();
+              const prevState = history.current.undo();
               if (prevState) {
                 e.currentTarget.value = prevState.text;
                 e.currentTarget.selectionStart = prevState.selectionStart;
@@ -217,7 +217,7 @@ export default function CodeEditor(
               (e.key === "Z" && e.shiftKey)
             ) {
               e.preventDefault();
-              const nextState = history.redo();
+              const nextState = history.current.redo();
               if (nextState) {
                 e.currentTarget.value = nextState.text;
                 e.currentTarget.selectionStart = nextState.selectionStart;
