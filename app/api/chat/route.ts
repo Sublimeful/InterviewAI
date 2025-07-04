@@ -38,8 +38,9 @@ Remember: This is a {company} interview, so tailor your questions to their typic
 export async function POST(request: NextRequest) {
   try {
     const {
-      message,
       company,
+      message,
+      timeContext,
       codeContext,
       sessionId,
     } = await request.json();
@@ -94,8 +95,9 @@ export async function POST(request: NextRequest) {
 
     // Execute with context
     const response = await chainWithHistory.invoke({
-      company: company,
-      input: `${message}\n\nHere is the code so far:\n${codeContext}`,
+      company,
+      input:
+        `${message}\n\nTime left in the interview:\n${timeContext}\n\nMy code so far:\n${codeContext}`,
     }, { configurable: { sessionId: finalSessionId } });
 
     // Save updated history to Redis after interaction

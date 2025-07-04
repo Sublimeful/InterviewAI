@@ -3,6 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Code, MessageCircle, Send } from "lucide-react";
+import { Mic, MicOff } from "lucide-react";
+import { useSpeechRecognition } from "react-speech-recognition";
+import {
+  formatTimeHHMM,
+  formatTimeMMSS,
+  formatTimeMMSSExplicit,
+} from "utils/timeFormatters";
 
 import CodeEditor from "@/components/CodeEditor";
 
@@ -23,6 +30,14 @@ export default function InterviewPageContent() {
   // Timer state
   const [timeLeft, setTimeLeft] = useState(initialTimeLimit * 60);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Add voice recognition states and hooks
+  const [isListening, setIsListening] = useState(false);
+  const {
+    transcript,
+    browserSupportsSpeechRecognition,
+    resetTranscript,
+  } = useSpeechRecognition();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -46,11 +61,11 @@ export default function InterviewPageContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            message: message,
             company: company,
+            message: message,
+            timeContext: formatTimeMMSSExplicit(timeLeft),
             codeContext: `\`\`\`${selectedLanguage}\n${code}\n\`\`\``,
             sessionId,
-            conversationHistory: messages, // Still send for context
           }),
         });
 
@@ -81,7 +96,7 @@ export default function InterviewPageContent() {
         };
       }
     },
-    [company, code, messages, sessionId, selectedLanguage],
+    [company, timeLeft, code, sessionId, selectedLanguage],
   );
 
   const sendChatMessage = async (message: string) => {
@@ -114,21 +129,28 @@ export default function InterviewPageContent() {
     await sendChatMessage(newMessage.trim());
   };
 
+  // Toggle voice recognition
+  const toggleListening = () => {
+    if (!browserSupportsSpeechRecognition) {
+      alert(
+        "Your browser doesn't support speech recognition. Please use Chrome or Edge.",
+      );
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      resetTranscript();
+    } else {
+      setIsListening(true);
+    }
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       handleSendMessage();
     }
-  };
-
-  // Format time for display
-  const formatTimeHHMM = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-  const formatTimeMMSS = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
   const handleEndInterview = () => {
@@ -188,6 +210,13 @@ export default function InterviewPageContent() {
       router.push(`/interview/feedback?sessionId=${sessionId}`);
     }
   }, [timeLeft, sessionId, router]);
+
+  // Update newMessage when transcript changes
+  useEffect(() => {
+    if (transcript) {
+      setNewMessage(transcript);
+    }
+  }, [transcript]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -338,6 +367,22 @@ export default function InterviewPageContent() {
                   scrollbarColor: "darkgrey transparent",
                 }}
               />
+              {/* Voice Input Button */}
+              <button
+                type="button"
+                title={isListening ? "Stop Voice Input" : "Start Voice Input"}
+                onClick={toggleListening}
+                className={`p-2 rounded-lg cursor-pointer transition-colors ${
+                  isListening
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                }`}
+              >
+                {isListening
+                  ? <MicOff className="w-4 h-4" />
+                  : <Mic className="w-4 h-4" />}
+              </button>
+              {/* Send Message Button */}
               <button
                 type="button"
                 title="Send Message"
@@ -348,6 +393,14 @@ export default function InterviewPageContent() {
                 <Send className="w-4 h-4" />
               </button>
             </div>
+            {/* Voice input status indicator */}
+            {isListening && (
+              <div className="mt-2 flex items-center text-sm text-gray-500">
+                <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse">
+                </div>
+                <span>Listening... Speak now</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

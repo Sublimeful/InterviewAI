@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { useState } from "react";
-import { ArrowRight, Briefcase, Building2, Clock } from "lucide-react";
+import { ArrowRight, Briefcase, Building2 } from "lucide-react";
 
 export default function Page() {
   const router = useRouter();
@@ -101,19 +101,21 @@ export default function Page() {
                   Time Limit: {timeLimit} minutes
                 </label>
                 <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-600">
+                    5m
+                  </span>
                   <input
                     type="range"
                     min="5"
-                    max="45"
+                    max="60"
                     step="5"
                     value={timeLimit}
                     onChange={(e) => setTimeLimit(parseInt(e.target.value))}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     disabled={isLoading}
                   />
-                  <span className="text-sm text-gray-600 min-w-[40px]">
-                    {timeLimit}m
+                  <span className="text-sm text-gray-600">
+                    60m
                   </span>
                 </div>
               </div>

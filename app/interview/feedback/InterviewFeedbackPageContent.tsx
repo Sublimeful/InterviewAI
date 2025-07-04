@@ -68,7 +68,7 @@ export default function InterviewFeedbackPageContent() {
             24 hours after completion.
           </p>
           <Link
-            href="/"
+            href="/setup"
             className="inline-block bg-blue-600 text-white font-medium py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Start New Interview
@@ -102,7 +102,7 @@ export default function InterviewFeedbackPageContent() {
 
         <div className="flex justify-center gap-4">
           <Link
-            href="/"
+            href="/setup"
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
           >
             Start New Interview
