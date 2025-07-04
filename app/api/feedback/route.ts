@@ -69,7 +69,8 @@ export async function GET(req: NextRequest) {
     const parsedHistory = JSON.parse(historyString);
 
     // Format conversation for feedback prompt
-    const conversation = parsedHistory.map((msg: Message) => {
+    // Omit the first message, as that's the initial problem statement request message
+    const conversation = parsedHistory.slice(1).map((msg: Message) => {
       return `${
         msg.type === "human" ? "Candidate" : "Interviewer"
       }: "${msg.content}"`;
