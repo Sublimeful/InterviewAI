@@ -1,7 +1,5 @@
 .dockerfile
-compose.yaml
 Dockerfile
-todo.txt
 .git
 .gitignore
 node_modules

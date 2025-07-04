@@ -1,7 +1,6 @@
 node_modules/
 dist/
 .next/
-redis_data/
 
 .env
 .env.local
