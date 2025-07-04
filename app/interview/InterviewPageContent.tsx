@@ -161,7 +161,7 @@ export default function InterviewPageContent() {
 
   const handleEndInterview = () => {
     if (!sessionId) {
-      alert("Please wait until the interview starts before ending");
+      alert("Please wait until the interview starts before ending.");
       return;
     }
 
