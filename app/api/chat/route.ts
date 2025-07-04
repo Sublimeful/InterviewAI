@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
     // If the key did not exist before, set an expiration time
     if (!keyExists) {
-      await redisClient.expire(finalSessionId, 3600); // Set expiration to 1 hour
+      await redisClient.expire(finalSessionId, 86400); // 24 hours
     }
 
     return NextResponse.json({

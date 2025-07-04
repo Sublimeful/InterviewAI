@@ -5,7 +5,7 @@ export async function getChatModel() {
   if (model === null) {
     model = new ChatGoogleGenerativeAI({
       apiKey: process.env.GOOGLE_GENAI_API_KEY,
-      model: "gemini-2.5-flash-lite-preview-06-17",
+      model: "gemini-2.5-flash",
     });
   }
 

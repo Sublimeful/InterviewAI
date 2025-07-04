@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Code, MessageCircle, Send } from "lucide-react";
 
@@ -14,9 +14,15 @@ interface Message {
 }
 
 export default function InterviewPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const company = searchParams.get("company") || "Unknown Company";
   const difficulty = searchParams.get("difficulty") || "Medium";
+  const initialTimeLimit = parseInt(searchParams.get("timeLimit") || "30", 10);
+
+  // Timer state
+  const [timeLeft, setTimeLeft] = useState(initialTimeLimit * 60);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -115,8 +121,29 @@ export default function InterviewPageContent() {
     }
   };
 
-  const formatTime = (date: Date) => {
+  // Format time for display
+  const formatTimeHHMM = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+  const formatTimeMMSS = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  const handleEndInterview = () => {
+    if (!sessionId) {
+      alert("Please wait until the interview starts before ending");
+      return;
+    }
+
+    if (
+      confirm(
+        "Are you sure you want to end the interview? You'll receive feedback based on your progress.",
+      )
+    ) {
+      router.push(`/interview/feedback?sessionId=${sessionId}`);
+    }
   };
 
   useEffect(() => {
@@ -138,6 +165,30 @@ export default function InterviewPageContent() {
     });
   }, [getChatResponse, company, difficulty]);
 
+  useEffect(() => {
+    // Start timer when component mounts
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current as NodeJS.Timeout);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  // Redirect when time runs out
+  useEffect(() => {
+    if (timeLeft === 0 && sessionId) {
+      router.push(`/interview/feedback?sessionId=${sessionId}`);
+    }
+  }, [timeLeft, sessionId, router]);
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
@@ -154,9 +205,20 @@ export default function InterviewPageContent() {
               <p className="text-sm text-gray-600">{company}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            Interview in progress
+          <div className="flex gap-6">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              Interview in progress
+            </div>
+
+            {/* End Interview Button */}
+            <button
+              type="button"
+              onClick={handleEndInterview}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+            >
+              End Interview
+            </button>
           </div>
         </div>
       </div>
@@ -177,11 +239,29 @@ export default function InterviewPageContent() {
         <div className="w-1/2 bg-white flex flex-col">
           {/* Chat Header */}
           <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <MessageCircle className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
-                Interview Chat
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex flex-row gap-2">
+                <MessageCircle className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  Interview Chat
+                </span>
+              </div>
+
+              {/* Timer display */}
+              <div className="flex items-center gap-3">
+                <div className="text-sm font-medium text-gray-700">
+                  Time Remaining:
+                </div>
+                <div
+                  className={`px-3 py-1 rounded-lg font-mono ${
+                    timeLeft < 300
+                      ? "bg-red-100 text-red-700"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {formatTimeMMSS(timeLeft)}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -211,7 +291,7 @@ export default function InterviewPageContent() {
                         : "text-gray-500"
                     }`}
                   >
-                    {formatTime(message.timestamp)}
+                    {formatTimeHHMM(message.timestamp)}
                   </div>
                 </div>
               </div>

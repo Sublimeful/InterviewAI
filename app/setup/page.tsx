@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { useState } from "react";
-import { ArrowRight, Briefcase, Building2 } from "lucide-react";
+import { ArrowRight, Briefcase, Building2, Clock } from "lucide-react";
 
 export default function Page() {
   const router = useRouter();
@@ -12,6 +12,7 @@ export default function Page() {
   const [difficulty, setDifficulty] = useState<"Easy" | "Medium" | "Hard">(
     "Medium",
   );
+  const [timeLimit, setTimeLimit] = useState(30); // Default 30 minutes
   const [isLoading, setIsLoading] = useState(false);
 
   const handleStartInterview = () => {
@@ -23,7 +24,7 @@ export default function Page() {
     // For demo purposes, we'll show what the URL would be
     const interviewUrl = `/interview?company=${
       encodeURIComponent(company.trim())
-    }&difficulty=${encodeURIComponent(difficulty)}`;
+    }&difficulty=${encodeURIComponent(difficulty)}&timeLimit=${timeLimit}`;
 
     setTimeout(() => {
       router.push(interviewUrl);
@@ -93,9 +94,34 @@ export default function Page() {
                   <option value="Hard">Hard</option>
                 </select>
               </div>
+
+              {/* Time Limit Selection */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Time Limit: {timeLimit} minutes
+                </label>
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-gray-400" />
+                  <input
+                    type="range"
+                    min="5"
+                    max="45"
+                    step="5"
+                    value={timeLimit}
+                    onChange={(e) => setTimeLimit(parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    disabled={isLoading}
+                  />
+                  <span className="text-sm text-gray-600 min-w-[40px]">
+                    {timeLimit}m
+                  </span>
+                </div>
+              </div>
             </div>
 
             <button
+              type="button"
+              title="Start Interview"
               onClick={handleStartInterview}
               disabled={!company.trim() || isLoading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"

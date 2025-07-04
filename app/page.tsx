@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Brain, CheckCircle, Play, Users, Zap } from "lucide-react";
+import { ArrowRight, Brain, Play, Users, Zap } from "lucide-react";
 import Link from "next/link";
 
 export default function Page() {
@@ -21,7 +21,7 @@ export default function Page() {
       icon: <Zap className="w-6 h-6 text-sky-600" />,
       title: "Real-time Simulation",
       description:
-        "Experience realistic interview conditions with video recording and time pressure.",
+        "Experience realistic interview conditions with voice recording and time pressure.",
     },
   ];
 
@@ -68,8 +68,6 @@ export default function Page() {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
-                  type="button"
-                  title="Start Practicing Now"
                   href="/setup"
                   className="group bg-gradient-to-r from-sky-500 to-blue-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-sky-600 hover:to-blue-600 transition-all transform hover:scale-105 flex items-center justify-center space-x-2"
                 >
@@ -99,14 +97,14 @@ export default function Page() {
                       AI Interviewer:
                     </p>
                     <p className="text-slate-600">
-                      &quot;Tell me about a challenging project you worked on
-                      recently.&quot;
+                      &quot;Implement a function to find the longest substring
+                      without repeating characters.&quot;
                     </p>
                   </div>
 
                   <div className="bg-sky-50 border border-sky-100 rounded-lg p-4">
                     <p className="text-sky-600 font-medium mb-2">
-                      Your Response:
+                      Your Solution:
                     </p>
                     <div className="flex items-center space-x-2 text-slate-500">
                       <div className="w-2 h-2 bg-sky-400 rounded-full animate-pulse">
@@ -117,17 +115,19 @@ export default function Page() {
 
                   <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
                     <p className="text-emerald-600 font-medium mb-2">
-                      Live Feedback:
+                      Technical Feedback:
                     </p>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2 text-slate-700">
-                        <CheckCircle className="w-4 h-4 text-emerald-500" />
-                        <span className="text-sm">Good use of STAR method</span>
+                        <Zap className="w-4 h-4 text-emerald-500" />
+                        <span className="text-sm">
+                          Consider using a sliding window approach
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2 text-slate-700">
-                        <CheckCircle className="w-4 h-4 text-emerald-500" />
+                        <Zap className="w-4 h-4 text-emerald-500" />
                         <span className="text-sm">
-                          Clear problem explanation
+                          Handle edge case: empty string input
                         </span>
                       </div>
                     </div>
