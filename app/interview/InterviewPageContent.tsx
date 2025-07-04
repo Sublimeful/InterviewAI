@@ -272,20 +272,20 @@ export default function InterviewPageContent() {
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
               <Code className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">
+              <h1 className="text-sm md:text-lg font-semibold text-gray-900">
                 Mock Interview
               </h1>
               <p className="text-sm text-gray-600">{company}</p>
             </div>
           </div>
-          <div className="flex gap-6">
+          <div className="flex md:gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               Interview in progress
@@ -295,7 +295,7 @@ export default function InterviewPageContent() {
             <button
               type="button"
               onClick={handleEndInterview}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+              className="md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
             >
               End Interview
             </button>
