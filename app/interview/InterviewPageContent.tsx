@@ -1,12 +1,15 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Code, MessageCircle, Send } from "lucide-react";
 import { Mic, MicOff } from "lucide-react";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
 import {
   formatTimeHHMM,
   formatTimeMMSS,
@@ -33,16 +36,17 @@ export default function InterviewPageContent() {
   const [timeLeft, setTimeLeft] = useState(initialTimeLimit * 60);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Add voice recognition states and hooks
-  const {
-    transcript,
-    listening,
-    resetTranscript,
+  // Speech recognition state
+  const [listening, setListening] = useState(false);
+  const [
     browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
+    setBrowserSupportsSpeechRecognition,
+  ] = useState(false);
+  const speechRecognitionRef = useRef<SpeechRecognition>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [message, setMessage] = useState("");
+  const [interimMessage, setInterimMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const isInitializedRef = useRef(false);
@@ -112,7 +116,7 @@ export default function InterviewPageContent() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setNewMessage("");
+    setMessage("");
     setIsTyping(true);
 
     try {
@@ -127,8 +131,8 @@ export default function InterviewPageContent() {
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-    await sendChatMessage(newMessage.trim());
+    if (!message.trim()) return;
+    await sendChatMessage(message.trim());
   };
 
   // Toggle voice recognition
@@ -141,10 +145,10 @@ export default function InterviewPageContent() {
     }
 
     if (listening) {
-      SpeechRecognition.stopListening();
-      resetTranscript();
+      speechRecognitionRef.current.stop();
     } else {
-      SpeechRecognition.startListening();
+      speechRecognitionRef.current.start();
+      setListening(true);
     }
   };
 
@@ -173,6 +177,58 @@ export default function InterviewPageContent() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Initialize speech recognition and events
+  useLayoutEffect(() => {
+    function recognitionOnEnd() {
+      setMessage((prevMessage) => prevMessage + interimMessage + ". ");
+      setInterimMessage("");
+      setListening(false);
+    }
+
+    function recognitionOnResult(event: SpeechRecognitionEvent) {
+      let finalTranscript = "";
+      let interimTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      setInterimMessage(finalTranscript + interimTranscript);
+    }
+
+    function recognitionOnError(event: SpeechRecognitionErrorEvent) {
+      console.error("Speech recognition error:", event.error);
+      setListening(false);
+    }
+
+    // Initialize Speech recognition
+    const SpeechRecognition = window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.warn("Speech recognition not supported in this browser");
+      return;
+    }
+
+    setBrowserSupportsSpeechRecognition(true);
+
+    if (!speechRecognitionRef.current) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+      speechRecognitionRef.current = recognition;
+    }
+
+    speechRecognitionRef.current.onresult = recognitionOnResult;
+    speechRecognitionRef.current.onend = recognitionOnEnd;
+    speechRecognitionRef.current.onerror = recognitionOnError;
+  }, [message, interimMessage]);
 
   // Get the problem statement and initial instructions
   useEffect(() => {
@@ -212,13 +268,6 @@ export default function InterviewPageContent() {
       router.push(`/interview/feedback?sessionId=${sessionId}`);
     }
   }, [timeLeft, sessionId, router]);
-
-  // Update newMessage when transcript changes
-  useEffect(() => {
-    if (transcript) {
-      setNewMessage(transcript);
-    }
-  }, [transcript]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -347,8 +396,8 @@ export default function InterviewPageContent() {
               <textarea
                 name="messageInput"
                 ref={messageInputRef}
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                value={message + interimMessage}
+                onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask a question or explain your approach..."
                 className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -379,7 +428,7 @@ export default function InterviewPageContent() {
                 type="button"
                 title="Send Message"
                 onClick={handleSendMessage}
-                disabled={!newMessage.trim() || isTyping}
+                disabled={!message.trim() || isTyping}
                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-colors"
               >
                 <Send className="w-4 h-4" />
