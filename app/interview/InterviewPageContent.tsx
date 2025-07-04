@@ -4,7 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Code, MessageCircle, Send } from "lucide-react";
 import { Mic, MicOff } from "lucide-react";
-import { useSpeechRecognition } from "react-speech-recognition";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
 import {
   formatTimeHHMM,
   formatTimeMMSS,
@@ -32,11 +34,11 @@ export default function InterviewPageContent() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Add voice recognition states and hooks
-  const [isListening, setIsListening] = useState(false);
   const {
     transcript,
-    browserSupportsSpeechRecognition,
+    listening,
     resetTranscript,
+    browserSupportsSpeechRecognition,
   } = useSpeechRecognition();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -133,16 +135,16 @@ export default function InterviewPageContent() {
   const toggleListening = () => {
     if (!browserSupportsSpeechRecognition) {
       alert(
-        "Your browser doesn't support speech recognition. Please use Chrome or Edge.",
+        "Your browser doesn't support speech recognition. Please use a supported browser like Chrome or Edge.",
       );
       return;
     }
 
-    if (isListening) {
-      setIsListening(false);
+    if (listening) {
+      SpeechRecognition.stopListening();
       resetTranscript();
     } else {
-      setIsListening(true);
+      SpeechRecognition.startListening();
     }
   };
 
@@ -253,19 +255,9 @@ export default function InterviewPageContent() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Code Editor - Left Side */}
-        <CodeEditor
-          onCodeChange={(newCode: string) => {
-            setCode(newCode);
-          }}
-          onLanguageChange={(newLanguage: string) => {
-            setSelectedLanguage(newLanguage);
-          }}
-        />
-
-        {/* Chat Interface - Right Side */}
-        <div className="w-1/2 bg-white flex flex-col">
+      <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden">
+        {/* Chat Interface - Top on mobile, Right on desktop */}
+        <div className="w-full md:w-1/2 bg-white flex flex-col order-2 md:order-2 h-1/2 md:h-full">
           {/* Chat Header */}
           <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -370,15 +362,15 @@ export default function InterviewPageContent() {
               {/* Voice Input Button */}
               <button
                 type="button"
-                title={isListening ? "Stop Voice Input" : "Start Voice Input"}
+                title={listening ? "Stop Voice Input" : "Start Voice Input"}
                 onClick={toggleListening}
                 className={`p-2 rounded-lg cursor-pointer transition-colors ${
-                  isListening
+                  listening
                     ? "bg-red-500 hover:bg-red-600 text-white"
                     : "bg-gray-200 hover:bg-gray-300 text-gray-700"
                 }`}
               >
-                {isListening
+                {listening
                   ? <MicOff className="w-4 h-4" />
                   : <Mic className="w-4 h-4" />}
               </button>
@@ -394,7 +386,7 @@ export default function InterviewPageContent() {
               </button>
             </div>
             {/* Voice input status indicator */}
-            {isListening && (
+            {listening && (
               <div className="mt-2 flex items-center text-sm text-gray-500">
                 <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse">
                 </div>
@@ -402,6 +394,18 @@ export default function InterviewPageContent() {
               </div>
             )}
           </div>
+        </div>
+        {/* Code Editor - Bottom on mobile, Left on desktop */}
+        <div className="w-full md:w-1/2 order-1 md:order-1 h-1/2 md:h-full">
+          {/* Code Editor - Left Side */}
+          <CodeEditor
+            onCodeChange={(newCode: string) => {
+              setCode(newCode);
+            }}
+            onLanguageChange={(newLanguage: string) => {
+              setSelectedLanguage(newLanguage);
+            }}
+          />
         </div>
       </div>
     </div>

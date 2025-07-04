@@ -157,7 +157,7 @@ export default function CodeEditor(
   }, [code]);
 
   return (
-    <div className="w-1/2 bg-gray-900 flex flex-col">
+    <div className="w-full h-full bg-gray-900 flex flex-col">
       {/* Language Selector */}
       <div className="bg-gray-800 px-4 py-3 border-b border-gray-700">
         <div className="flex items-center gap-2">
