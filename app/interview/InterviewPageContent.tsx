@@ -181,7 +181,7 @@ export default function InterviewPageContent() {
   // Initialize speech recognition and events
   useLayoutEffect(() => {
     function recognitionOnEnd() {
-      setMessage((prevMessage) => prevMessage + interimMessage + ". ");
+      setMessage((prevMessage) => prevMessage + interimMessage);
       setInterimMessage("");
       setListening(false);
     }
