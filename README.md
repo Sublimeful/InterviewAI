@@ -3,6 +3,14 @@ AI technical interviewer
 
 ## How to run
 
+### First, you will need a Google Gemini API Key
+- Go to https://aistudio.google.com/app/apikey
+- Generate an API Key
+- Create a .env file in the project root
+```.env
+GOOGLE_GENAI_API_KEY=<Your API Key>
+```
+
 ### Install all the node dependencies
 ```
 npm install
